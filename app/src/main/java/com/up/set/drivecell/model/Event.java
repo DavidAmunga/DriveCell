@@ -8,10 +8,6 @@ public class Event {
     private String eventDescription,eventName,eventPostDate,eventPostTime,eventType,eventUploader;
     private Double eventLatitude,eventLongitude;
 
-    public Event()
-    {
-
-    }
 
     public Event(String eventDescription,Double eventLatitude, Double eventLongitude, String eventName, String eventPostDate, String eventPostTime, String eventType, String eventUploader) {
         this.eventDescription = eventDescription;
@@ -22,6 +18,10 @@ public class Event {
         this.eventPostTime = eventPostTime;
         this.eventType = eventType;
         this.eventUploader = eventUploader;
+    }
+
+    public Event() {
+
     }
 
     public String getEventDescription() {

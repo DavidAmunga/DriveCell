@@ -1,25 +1,20 @@
 package com.up.set.drivecell.fragments;
 
 import android.Manifest;
-import android.app.Fragment;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -45,18 +40,13 @@ import com.google.firebase.database.ValueEventListener;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.ViewHolder;
-import com.up.set.drivecell.HomeActivity;
 import com.up.set.drivecell.R;
 import com.up.set.drivecell.customfont.CustomEditText;
-import com.up.set.drivecell.model.Common;
-
+import com.up.set.drivecell.model.Event;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
-
-import io.paperdb.Paper;
+import java.util.HashMap;
 
 /**
  * Created by amush on 11-Nov-17.
@@ -80,7 +70,9 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
 
     //Google ApiClient
     private GoogleApiClient googleApiClient;
-
+    private HashMap<Marker, Event> myMarkerHashMap;
+    private Location mLastLocation;
+    private Marker mCurrLocationMarker;
 
     @Nullable
     @Override
@@ -96,7 +88,7 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
-
+        myMarkerHashMap = new HashMap<>();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                 .findFragmentById(R.id.map);
@@ -114,13 +106,8 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
         //Creating a LatLng Object to store Coordinates
         LatLng latLng = new LatLng(latitude, longitude);
 
-        //Adding marker to map
-        mMap.addMarker(new MarkerOptions()
-                .position(latLng) //setting position
-                .draggable(true) //Making the marker draggable
-                .title("Me")
 
-        ); //Adding a title
+
 
         //Moving the camera
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -161,6 +148,17 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.setOnMarkerDragListener(this);
         mMap.setOnMapLongClickListener(this);
+
+        mMap.getUiSettings().setCompassEnabled(true);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                marker.showInfoWindow();
+                return true;
+            }
+        });
 
 
         try {
@@ -209,10 +207,14 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
                         Double lat=Double.valueOf(postSnapshot.child("eventLatitude").getValue().toString());
                         Double lng=Double.valueOf(postSnapshot.child("eventLongitude").getValue().toString());
                         String type=postSnapshot.child("eventType").getValue().toString();
-                        String name=postSnapshot.child("eventType").getValue().toString();
+                        String name = postSnapshot.child("eventName").getValue().toString();
+                        String time = postSnapshot.child("eventPostTime").getValue().toString();
+                        String date = postSnapshot.child("eventPostDate").getValue().toString();
+                        String uploader = postSnapshot.child("eventUploader").getValue().toString();
+                        String desc = postSnapshot.child("eventDescription").getValue().toString();
 
                         LatLng loc=new LatLng(lat,lng);
-                        addMarkers(loc,name,type);
+                        addMarkers(loc, name, type, time, date, uploader, desc);
 
                     }
                 }
@@ -225,54 +227,101 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
         });
     }
 
-    private void addMarkers(LatLng loc, String name, String type) {
+    private void addMarkers(LatLng loc, String name, String type, String time, String date, String uploader, String desc) {
+        Marker marker;
         switch (type)
         {
             case "Accident":
-
-                mMap.addMarker(new MarkerOptions()
+                marker = mMap.addMarker(new MarkerOptions()
                         .position(loc)
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.caution))
                         .title(name)
                         .draggable(true));
+                myMarkerHashMap.put(marker, new Event(desc, loc.latitude, loc.longitude, name, date, time, type, uploader));
+
+                mMap.setInfoWindowAdapter(new MarkerInfoWindowAdapter());
                 break;
             case "Road Block":
-
-                mMap.addMarker(new MarkerOptions()
+                marker = mMap.addMarker(new MarkerOptions()
                         .position(loc)
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.crossingguard))
                         .title(name)
                         .draggable(true));
+                myMarkerHashMap.put(marker, new Event(desc, loc.latitude, loc.longitude, name, date, time, type, uploader));
+
+                mMap.setInfoWindowAdapter(new MarkerInfoWindowAdapter());
                 break;
             case "Closed Road":
-                mMap.addMarker(new MarkerOptions()
+                marker = mMap.addMarker(new MarkerOptions()
                         .position(loc)
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.closedroad))
                         .title(name)
                         .draggable(true));
+                myMarkerHashMap.put(marker, new Event(desc, loc.latitude, loc.longitude, name, date, time, type, uploader));
+
+                mMap.setInfoWindowAdapter(new MarkerInfoWindowAdapter());
                 break;
             case "Fire":
-                mMap.addMarker(new MarkerOptions()
+                marker = mMap.addMarker(new MarkerOptions()
                         .position(loc)
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.fire))
                         .title(name)
                         .draggable(true));
+                myMarkerHashMap.put(marker, new Event(desc, loc.latitude, loc.longitude, name, date, time, type, uploader));
+
+                mMap.setInfoWindowAdapter(new MarkerInfoWindowAdapter());
                 break;
             case "Theft":
-                mMap.addMarker(new MarkerOptions()
+                marker = mMap.addMarker(new MarkerOptions()
                         .position(loc)
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.theft))
                         .title(name)
                         .draggable(true));
+                myMarkerHashMap.put(marker, new Event(desc, loc.latitude, loc.longitude, name, date, time, type, uploader));
+
+                mMap.setInfoWindowAdapter(new MarkerInfoWindowAdapter());
                 break;
             case "Robbery":
-                mMap.addMarker(new MarkerOptions()
+                marker = mMap.addMarker(new MarkerOptions()
                         .position(loc)
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.robbery))
                         .title(name)
                         .draggable(true));
+                myMarkerHashMap.put(marker, new Event(desc, loc.latitude, loc.longitude, name, date, time, type, uploader));
+
+                mMap.setInfoWindowAdapter(new MarkerInfoWindowAdapter());
                 break;
 
+        }
+    }
+
+    public class MarkerInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
+
+        public MarkerInfoWindowAdapter() {
+        }
+
+        @Override
+        public View getInfoWindow(Marker marker) {
+            return null;
+        }
+
+        @Override
+        public View getInfoContents(Marker marker) {
+
+            View v = getLayoutInflater().inflate(R.layout.info_window_layout, null);
+            Event myMarker = myMarkerHashMap.get(marker);
+
+            TextView eventName = (TextView) v.findViewById(R.id.txtName);
+            TextView eventType = (TextView) v.findViewById(R.id.txtType);
+            TextView eventTime = (TextView) v.findViewById(R.id.txtTime);
+
+            Log.d(TAG, "Event " + myMarkerHashMap.get(marker));
+            eventName.setText(myMarker.getEventName());
+            eventTime.setText(myMarker.getEventPostTime());
+            setEventTypeColor(eventType, myMarker.getEventType());
+
+
+            return v;
         }
     }
 
@@ -317,6 +366,30 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
     public void onStop() {
         googleApiClient.disconnect();
         super.onStop();
+
+    }
+
+    public void setEventTypeColor(TextView edt, String type) {
+
+        if (type.equals("Fire")) {
+            edt.setTextColor(Color.parseColor("#fd151b"));
+            edt.setText(type);
+        } else if (type.equals("Accident")) {
+            edt.setTextColor(Color.parseColor("#ed254e"));
+            edt.setText(type);
+        } else if (type.equals("Road Block")) {
+            edt.setTextColor(Color.parseColor("#0039b3"));
+            edt.setText(type);
+        } else if (type.equals("Closed Road")) {
+            edt.setTextColor(Color.parseColor("#465362"));
+            edt.setText(type);
+        } else if (type.equals("Robbery")) {
+            edt.setTextColor(Color.parseColor("#011936"));
+            edt.setText(type);
+        } else if (type.equals("Theft")) {
+            edt.setTextColor(Color.parseColor("#e89b29"));
+            edt.setText(type);
+        }
 
     }
 
@@ -440,13 +513,26 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
 
     @Override
     public void onLocationChanged(Location location) {
-        if(location.hasSpeed())
-        {
-            Log.d(TAG, "Speedo");
-            Double speed=Double.valueOf(location.getSpeed()*18/5);
+        mLastLocation = location;
 
-            Toast.makeText(getContext(), ""+speed, Toast.LENGTH_SHORT).show();
+        if (mCurrLocationMarker != null) {
+            mCurrLocationMarker.remove();
         }
+        //Place current location marker
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title("Me");
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        mCurrLocationMarker = mMap.addMarker(markerOptions);
+
+        myMarkerHashMap.put(mCurrLocationMarker, new Event("", location.getLatitude(), location.getLongitude(), "Me", "Today", "Now", "Me", "Me"));
+        mMap.setInfoWindowAdapter(new MarkerInfoWindowAdapter());
+
+        //move map cameraf
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
+
 
     }
 
