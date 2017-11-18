@@ -61,6 +61,8 @@
                 android:id="@+id/bottomNavView_Bar"
                 android:background="@drawable/gray_border_top"
                 app:menu="@menu/bottom_nav_menu"
+                app:itemIconTint="@drawable/nav_item_color_state"
+                app:itemTextColor="@drawable/nav_item_color_state"
                 />
 
 

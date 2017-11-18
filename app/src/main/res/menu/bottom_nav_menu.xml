@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<<<<<<< HEAD
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+=======
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+>>>>>>> Custom Font
 
 
     <item
@@ -7,10 +12,19 @@
         android:icon="@drawable/ic_map"
         android:title="Map"
 
+<<<<<<< HEAD
+=======
+        app:itemBackground="@color/colorPrimaryDark"
+
+>>>>>>> Custom Font
         />
     <item
         android:id="@+id/ic_places"
         android:icon="@drawable/ic_places"
+<<<<<<< HEAD
+=======
+        app:itemBackground="@color/colorPrimaryDark"
+>>>>>>> Custom Font
 
         android:title="Places"
 

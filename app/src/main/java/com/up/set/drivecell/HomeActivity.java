@@ -1,6 +1,7 @@
 package com.up.set.drivecell;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -8,9 +9,13 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.style.TypefaceSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.SubMenu;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -34,6 +39,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.up.set.drivecell.customfont.CustomTypeFaceSpan;
+import com.up.set.drivecell.customfont.TypeFactory;
 import com.up.set.drivecell.fragments.PlacesFragment;
 import com.up.set.drivecell.fragments.MapFragment;
 import com.up.set.drivecell.helper.BottomNavigationViewHelper;
@@ -70,7 +77,17 @@ public class HomeActivity extends AppCompatActivity
         toolbar = (Toolbar)findViewById(R.id.toolbar);
 
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("DriveCell");
+
+        Typeface avenirBook = Typeface.createFromAsset(this.getAssets(),"AvenirLTStd-Book.otf");
+
+        SpannableString sa = new SpannableString("DriveCell");
+        sa.setSpan(new CustomTypeFaceSpan("",avenirBook), 0, sa.length(),
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+
+        getSupportActionBar().setTitle(sa);
+
+
 
         //Google Sign In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -135,10 +152,33 @@ public class HomeActivity extends AppCompatActivity
             }
         });
 
+
+
         Menu menu = bottomNavigationView.getMenu();
         MenuItem menuItem = menu.getItem(0);
         menuItem.setChecked(true);
         changeFragment(0);
+
+
+
+        Menu m = bottomNavigationView .getMenu();
+
+        for (int i=0;i<m.size();i++) {
+            if (m!=null && m.size() >0 ) {
+                for (int j=0; j <m.size();j++) {
+                    MenuItem subMenuItem = m.getItem(j);
+                    Log.d(TAG, "Menu Item "+m.getItem(j));
+                    SpannableString s = new SpannableString(subMenuItem.getTitle());
+
+
+                    s.setSpan(new CustomTypeFaceSpan("",avenirBook), 0, s.length(),
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                    subMenuItem.setTitle(s);
+                }
+            }
+
+        }
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
