@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1062727124798",
+    "firebase_url": "https://drivecell-4557c.firebaseio.com",
+    "project_id": "drivecell-4557c",
+    "storage_bucket": "drivecell-4557c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1062727124798:android:3b95b5b5a00cd62c",
+        "android_client_info": {
+          "package_name": "com.up.set.drivecell"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1062727124798-tapka9e4cf3q1eeisva0c8gnu4f69jag.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.up.set.drivecell",
+            "certificate_hash": "ce92d7a69dc99a9796ec5571cc878ce02e1bffcd"
+          }
+        },
+        {
+          "client_id": "1062727124798-7tpdcs2627gf7unne77c7iv3n7vvotdk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgsIZ9HbrJnN-Z0ZCYSSAqLxpaxjtOjyk"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1062727124798-7tpdcs2627gf7unne77c7iv3n7vvotdk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

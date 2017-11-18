@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="marker">
+        <item>Closed Road</item>
+        <item>Accident</item>
+        <item>Fire</item>
+        <item>Robbery</item>
+        <item>Theft</item>
+    </string-array>
+
+</resources>
