@@ -5,5 +5,5 @@
         android:id="@+id/filter"
         android:orderInCategory="100"
         android:title="Filter"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
 </menu>

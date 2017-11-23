@@ -44,8 +44,10 @@ import com.up.set.drivecell.R;
 import com.up.set.drivecell.customfont.CustomEditText;
 import com.up.set.drivecell.model.Event;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -317,12 +319,34 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
 
             Log.d(TAG, "Event " + myMarkerHashMap.get(marker));
             eventName.setText(myMarker.getEventName());
-            eventTime.setText(myMarker.getEventPostTime());
+            eventTime.setText(setEventPostTime(myMarker.getEventPostTime()));
             setEventTypeColor(eventType, myMarker.getEventType());
 
 
             return v;
         }
+    }
+
+    public String setEventPostTime(String time) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm:ss");
+
+
+        try {
+            Date date = dateFormat.parse(time);
+            SimpleDateFormat dateFormat1 = new SimpleDateFormat("hh:mm aa");
+            String newTime = dateFormat1.format(date);
+            if (newTime.contains("0")) {
+                newTime = newTime.replace("0", "");
+                return newTime;
+            } else {
+                return newTime;
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return time;
+
     }
 
     @Override
