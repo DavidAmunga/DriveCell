@@ -5,21 +5,17 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.up.set.drivecell.R;
 import com.up.set.drivecell.model.Event;
-
-import org.w3c.dom.Text;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -76,7 +72,10 @@ public class PlacesFragment extends android.support.v4.app.Fragment {
         ) {
             @Override
             protected void populateViewHolder(EventsViewHolder viewHolder, Event model, int position) {
+                Log.d(TAG, "ModelView " + model.getEventName() + model.getEventPostTime() + model.getEventPostDate());
+                Log.d(TAG, "Post Date: " + model.getEventPostDate());
                 viewHolder.setEventPostDate(model.getEventPostDate());
+
                 viewHolder.setEventPostTime(model.getEventPostTime());
                 viewHolder.setEventsName(model.getEventName());
                 viewHolder.setEventType(model.getEventType());

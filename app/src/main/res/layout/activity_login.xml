@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.up.set.drivecell.LoginActivity">
+    tools:context="com.up.set.drivecell.LoginActivity"
+    android:id="@+id/rel1">
 
 
     <ScrollView
@@ -15,8 +15,9 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_below="@+id/login_image"
 
-            android:layout_below="@+id/login_image">
+            >
 
             <com.facebook.login.widget.LoginButton
                 android:layout_width="match_parent"
@@ -54,7 +55,7 @@
                 android:layout_marginTop="130dp"
                 android:layout_marginLeft="30dp"
                 android:layout_marginRight="30dp"
-                android:hint="Email or Username ......"
+                android:hint="Email ......"
                 android:id="@+id/txt_email"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true" />
@@ -112,7 +113,7 @@
                     android:text="Sign Up"
                     android:textSize="15dp"
                     android:id="@+id/txt_signUp"
-                    android:textColor="@color/colorPrimary"
+                    android:textColor="@color/colorAccent"
                     android:layout_alignBaseline="@+id/textView1"
                     android:layout_alignBottom="@+id/textView1"
                     android:layout_toEndOf="@+id/textView1"

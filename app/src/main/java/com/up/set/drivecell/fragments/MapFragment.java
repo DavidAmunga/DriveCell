@@ -5,7 +5,9 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.location.Location;
+import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
@@ -17,6 +19,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -38,14 +44,17 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.jaredrummler.materialspinner.MaterialSpinner;
+import com.liuguangqiang.cookie.CookieBar;
 import com.orhanobut.dialogplus.DialogPlus;
 import com.orhanobut.dialogplus.ViewHolder;
 import com.up.set.drivecell.R;
 import com.up.set.drivecell.customfont.CustomEditText;
 import com.up.set.drivecell.model.Event;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -55,7 +64,7 @@ import java.util.HashMap;
 public class MapFragment extends android.support.v4.app.Fragment implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnMarkerDragListener,
-        GoogleMap.OnMapLongClickListener,LocationListener {
+        GoogleMap.OnMapLongClickListener, LocationListener {
     private static final String TAG = "MapFragment";
 
 
@@ -73,6 +82,8 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
     private HashMap<Marker, Event> myMarkerHashMap;
     private Location mLastLocation;
     private Marker mCurrLocationMarker;
+    private GeoQuery geoQuery;
+    private double radius = 1;
 
     @Nullable
     @Override
@@ -94,19 +105,103 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        getClosestEvent();
+
         return view;
 
 
     }
 
+    private void getClosestEvent() {
+        Log.d(TAG, "getClosestEvent: Start");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Events");
+
+        final DatabaseReference refEvent = FirebaseDatabase.getInstance().getReference().child("Events");
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    final String eventKey = postSnapshot.getKey();
+                    Log.d(TAG, "onDataChange: Key!");
+                    GeoFire geoFire = new GeoFire(refEvent.child(eventKey));
+                    geoQuery = geoFire.queryAtLocation(new GeoLocation(latitude, longitude), radius);
+                    geoQuery.removeAllListeners();
+
+                    geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+                        @Override
+                        public void onKeyEntered(String key, GeoLocation location) {
+                            Log.d(TAG, "onKeyEntered: Yes");
+                            DatabaseReference refDetails = FirebaseDatabase.getInstance().getReference("Events").child(eventKey);
+                            refDetails.addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+
+                                    String type = dataSnapshot.child("eventType").getValue().toString();
+
+
+                                    MediaPlayer mediaPlayer = MediaPlayer.create(getContext(), R.raw.alert);
+                                    mediaPlayer.start(); // no need to call prepare(); create() does that for you
+                                    Vibrator v = (Vibrator) getActivity().getSystemService(getContext().VIBRATOR_SERVICE);
+                                    v.vibrate(100);
+
+
+                                    new CookieBar.Builder(getActivity())
+                                            .setTitle("Info")
+                                            .setIcon(R.drawable.ic_warning_black_24dp)
+                                            .setMessage(type + " nearby")
+                                            .setBackgroundColor(R.color.colorAccent)
+                                            .setMessageColor(R.color.colorBlack)
+                                            .setTitleColor(R.color.colorBlack)
+                                            .show();
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onKeyExited(String key) {
+
+                        }
+
+                        @Override
+                        public void onKeyMoved(String key, GeoLocation location) {
+
+                        }
+
+                        @Override
+                        public void onGeoQueryReady() {
+
+                        }
+
+                        @Override
+                        public void onGeoQueryError(DatabaseError error) {
+
+                        }
+                    });
+
+                }
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+
+    }
 
 
     //Function to move the map
     private void moveMap() {
         //Creating a LatLng Object to store Coordinates
         LatLng latLng = new LatLng(latitude, longitude);
-
-
 
 
         //Moving the camera
@@ -177,9 +272,9 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
 
 
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(getActivity(),
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                        LOCATION_REQUEST);
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_REQUEST);
 
             return;
         }
@@ -196,24 +291,22 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
     }
 
     private void getMarkers() {
-        DatabaseReference ref=FirebaseDatabase.getInstance().getReference("Events");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Events");
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot postSnapshot:dataSnapshot.getChildren())
-                {
-                    if(postSnapshot.hasChild("eventType"))
-                    {
-                        Double lat=Double.valueOf(postSnapshot.child("eventLatitude").getValue().toString());
-                        Double lng=Double.valueOf(postSnapshot.child("eventLongitude").getValue().toString());
-                        String type=postSnapshot.child("eventType").getValue().toString();
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    if (postSnapshot.hasChild("eventType")) {
+                        Double lat = Double.valueOf(postSnapshot.child("eventLatitude").getValue().toString());
+                        Double lng = Double.valueOf(postSnapshot.child("eventLongitude").getValue().toString());
+                        String type = postSnapshot.child("eventType").getValue().toString();
                         String name = postSnapshot.child("eventName").getValue().toString();
                         String time = postSnapshot.child("eventPostTime").getValue().toString();
                         String date = postSnapshot.child("eventPostDate").getValue().toString();
                         String uploader = postSnapshot.child("eventUploader").getValue().toString();
                         String desc = postSnapshot.child("eventDescription").getValue().toString();
 
-                        LatLng loc=new LatLng(lat,lng);
+                        LatLng loc = new LatLng(lat, lng);
                         addMarkers(loc, name, type, time, date, uploader, desc);
 
                     }
@@ -229,8 +322,7 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
 
     private void addMarkers(LatLng loc, String name, String type, String time, String date, String uploader, String desc) {
         Marker marker;
-        switch (type)
-        {
+        switch (type) {
             case "Accident":
                 marker = mMap.addMarker(new MarkerOptions()
                         .position(loc)
@@ -317,12 +409,34 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
 
             Log.d(TAG, "Event " + myMarkerHashMap.get(marker));
             eventName.setText(myMarker.getEventName());
-            eventTime.setText(myMarker.getEventPostTime());
+            eventTime.setText(setEventPostTime(myMarker.getEventPostTime()));
             setEventTypeColor(eventType, myMarker.getEventType());
 
 
             return v;
         }
+    }
+
+    public String setEventPostTime(String time) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm:ss");
+
+
+        try {
+            Date date = dateFormat.parse(time);
+            SimpleDateFormat dateFormat1 = new SimpleDateFormat("hh:mm aa");
+            String newTime = dateFormat1.format(date);
+            if (newTime.contains("0")) {
+                newTime = newTime.replace("0", "");
+                return newTime;
+            } else {
+                return newTime;
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return time;
+
     }
 
     @Override
@@ -394,7 +508,6 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
     }
 
 
-
     @Override
     public void onMapLongClick(LatLng latLng) {
 
@@ -404,10 +517,12 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
         latitude = latLng.latitude;
         longitude = latLng.longitude;
 
-        showAlertDialog(latitude,longitude);
+        showAlertDialog(latitude, longitude);
 
     }
-    String type="";
+
+    String type = "";
+
     private void showAlertDialog(final double latitude, final double longitude) {
         DialogPlus dialog = DialogPlus.newDialog(getContext())
                 .setInAnimation(R.anim.slide_in_bottom)
@@ -418,69 +533,60 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
                 .create();
 
         dialog.show();
-        View view=dialog.getHolderView();
-        final CustomEditText eventName=(CustomEditText)view.findViewById(R.id.eventName);
-        final CustomEditText eventDescription=(CustomEditText)view.findViewById(R.id.eventDescription);
-        Button btnAdd=(Button)view.findViewById(R.id.btnAdd);
-        final MaterialSpinner eventSpinner=(MaterialSpinner)view.findViewById(R.id.eventSpinner);
-        eventSpinner.setItems("Accident","Road Block","Closed Road","Fire","Robbery","Theft");
+        View view = dialog.getHolderView();
+        final CustomEditText eventName = (CustomEditText) view.findViewById(R.id.eventName);
+        final CustomEditText eventDescription = (CustomEditText) view.findViewById(R.id.eventDescription);
+        Button btnAdd = (Button) view.findViewById(R.id.btnAdd);
+        final MaterialSpinner eventSpinner = (MaterialSpinner) view.findViewById(R.id.eventSpinner);
+        eventSpinner.setItems("Accident", "Road Block", "Closed Road", "Fire", "Robbery", "Theft");
 
         eventSpinner.setOnItemSelectedListener(new MaterialSpinner.OnItemSelectedListener() {
             @Override
             public void onItemSelected(MaterialSpinner view, int position, long id, Object item) {
-                if(item.equals("Accident"))
-                {
-                    type="Accident";
+                if (item.equals("Accident")) {
+                    type = "Accident";
                     Log.d(TAG, "onItemSelected:Accident");
-                }
-                else if(item.equals("Road Block"))
-                {
-                    type ="Road Block";
+                } else if (item.equals("Road Block")) {
+                    type = "Road Block";
                     Log.d(TAG, "onItemSelected: Road Block");
-                }
-                else if(item.equals("Closed Road"))
-                {
-                    type="Closed Road";
+                } else if (item.equals("Closed Road")) {
+                    type = "Closed Road";
                     Log.d(TAG, "onItemSelected: Closed Road");
-                }
-                else if(item.equals("Fire"))
-                {
-                    type="Fire";
+                } else if (item.equals("Fire")) {
+                    type = "Fire";
                     Log.d(TAG, "onItemSelected: Fire");
-                }
-                else if(item.equals("Robbery"))
-                {
-                    type="Robbery";
+                } else if (item.equals("Robbery")) {
+                    type = "Robbery";
                     Log.d(TAG, "onItemSelected: Robbery");
-                }
-                else if(item.equals("Theft"))
-                {
-                    type="Theft";
+                } else if (item.equals("Theft")) {
+                    type = "Theft";
                     Log.d(TAG, "onItemSelected: Theft");
-                }
-                else
-                {
-                    type="Custom";
+                } else {
+                    type = "Custom";
                 }
             }
 
         });
 
-        FirebaseUser user= FirebaseAuth.getInstance().getCurrentUser();
-        final String userDisplayName=user.getDisplayName();
-        Log.d(TAG, "showAlertDialog: Username"+userDisplayName);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        final String userDisplayName = user.getDisplayName();
+        Log.d(TAG, "showAlertDialog: Username" + userDisplayName);
 
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String name=eventName.getText().toString();
-                String desc=eventDescription.getText().toString();
+                String name = eventName.getText().toString();
+                String desc = eventDescription.getText().toString();
 
-                if (!TextUtils.isEmpty(name) && !TextUtils.isEmpty(desc) &&!TextUtils.isEmpty(name)&& !TextUtils.isEmpty(type)){
+                if (!TextUtils.isEmpty(name) && !TextUtils.isEmpty(desc) && !TextUtils.isEmpty(name) && !TextUtils.isEmpty(type)) {
                     String date = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
                     String time = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
 
-                    DatabaseReference ref=FirebaseDatabase.getInstance().getReference("Events").push();
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Events").push();
+
+                    String id = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    GeoFire geoFire = new GeoFire(ref);
+                    geoFire.setLocation(id, new GeoLocation(latitude, longitude));
                     ref.child("eventName").setValue(name);
                     ref.child("eventDescription").setValue(desc);
                     ref.child("eventLatitude").setValue(latitude);
@@ -496,17 +602,11 @@ public class MapFragment extends android.support.v4.app.Fragment implements OnMa
                     });
 
 
-
-
-                }
-                else
-                {
+                } else {
                     Toast.makeText(getContext(), "Please insert all the details", Toast.LENGTH_SHORT).show();
                 }
             }
         });
-
-
 
 
     }

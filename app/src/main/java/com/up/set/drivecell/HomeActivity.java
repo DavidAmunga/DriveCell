@@ -6,28 +6,23 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.TextUtils;
-import android.text.style.TypefaceSpan;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.SubMenu;
-import android.view.View;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,12 +35,10 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.up.set.drivecell.customfont.CustomTypeFaceSpan;
-import com.up.set.drivecell.customfont.TypeFactory;
-import com.up.set.drivecell.fragments.PlacesFragment;
 import com.up.set.drivecell.fragments.MapFragment;
+import com.up.set.drivecell.fragments.PlacesFragment;
 import com.up.set.drivecell.helper.BottomNavigationViewHelper;
 import com.up.set.drivecell.helper.SectionsPagerAdapter;
-import com.up.set.drivecell.model.Common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,7 +73,7 @@ public class HomeActivity extends AppCompatActivity
 
         Typeface avenirBook = Typeface.createFromAsset(this.getAssets(),"AvenirLTStd-Book.otf");
 
-        SpannableString sa = new SpannableString("DriveCell");
+        SpannableString sa = new SpannableString("E-DRIVE");
         sa.setSpan(new CustomTypeFaceSpan("",avenirBook), 0, sa.length(),
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
@@ -232,17 +225,16 @@ public class HomeActivity extends AppCompatActivity
                 txtUserName.setText(name);
                 txtEmail.setText(email);
 
+            } else {
+                String name = user.getDisplayName();
+                String email = user.getEmail();
+
+                txtUserName.setText(name);
+                txtEmail.setText(email);
+
             }
         }
-        else
-        {
-            String name =user.getDisplayName();
-            String email=user.getEmail();
 
-            txtUserName.setText(name);
-            txtEmail.setText(email);
-
-        }
 
     }
 
@@ -389,15 +381,14 @@ public class HomeActivity extends AppCompatActivity
                 startActivity(new Intent(HomeActivity.this, LoginActivity.class));
                 finish();
 
+            } else {
+                FirebaseAuth.getInstance().signOut();
+                startActivity(new Intent(HomeActivity.this, LoginActivity.class));
+                finish();
+
             }
         }
-        else
-        {
-            FirebaseAuth.getInstance().signOut();
-            startActivity(new Intent(HomeActivity.this, LoginActivity.class));
-            finish();
 
-        }
 
 
 

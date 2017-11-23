@@ -2,13 +2,12 @@ package com.up.set.drivecell;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -17,6 +16,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.muddzdev.styleabletoastlibrary.StyleableToast;
@@ -37,8 +38,6 @@ public class RegisterActivity extends AppCompatActivity {
 
 
         initViews();
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         mAuth=FirebaseAuth.getInstance();
 
@@ -97,7 +96,8 @@ public class RegisterActivity extends AppCompatActivity {
                                 // the auth state listener will be notified and logic to handle the
                                 // signed in user can be handled in the listener.
                                 if (!task.isSuccessful()) {
-                                    Toast.makeText(RegisterActivity.this, R.string.auth_failed,
+                                    String error = task.getException().getLocalizedMessage();
+                                    Toast.makeText(RegisterActivity.this, error,
                                             Toast.LENGTH_SHORT).show();
                                 }
 
@@ -110,6 +110,13 @@ public class RegisterActivity extends AppCompatActivity {
                                     ref.child("userPhotoUrl").setValue("");
 
                                     ref.child("userPhoneNo").setValue(phoneNo);
+
+                                    FirebaseUser user = mAuth.getCurrentUser();
+
+                                    UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                            .setDisplayName(userName).build();
+
+                                    user.updateProfile(profileUpdates);
 
                                     StyleableToast st=new StyleableToast(getApplicationContext(),"Good! Welcome",Toast.LENGTH_SHORT);
                                     st.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));

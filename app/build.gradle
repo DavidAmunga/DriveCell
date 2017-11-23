@@ -42,6 +42,8 @@ dependencies {
     compile 'com.codemybrainsout.placesearchdialog:placesearch:1.0.1'
     compile 'com.google.android.gms:play-services-auth:10.0.1'
     compile 'com.orhanobut:dialogplus:1.11@aar'
+    compile 'com.firebase:geofire-android:2.1.1'
+    compile 'com.liuguangqiang.cookie:library:0.3'
 
 
     implementation 'com.facebook.android:facebook-android-sdk:4.6.0'

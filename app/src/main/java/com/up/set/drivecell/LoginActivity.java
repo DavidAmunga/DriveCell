@@ -7,15 +7,17 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.graphics.Color;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -71,6 +73,8 @@ public class LoginActivity extends AppCompatActivity {
     SignInButton btnGG;
     Button btnLogin;
     TextView txtRegister;
+
+    RelativeLayout rel1;
 
     EditText txtEmail,txtPassword;
     private static final int RC_SIGN_IN=2;
@@ -177,28 +181,34 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 String email=txtEmail.getText().toString().trim();
                 String password=txtPassword.getText().toString().trim();
+                if (!TextUtils.isEmpty(email) && !TextUtils.isEmpty(password)) {
+                    mAuth.signInWithEmailAndPassword(email, password)
+                            .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<AuthResult> task) {
+                                    Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
 
-                mAuth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
+                                    if (!task.isSuccessful()) {
+                                        String error = task.getException().getLocalizedMessage();
+                                        Toast.makeText(LoginActivity.this, error,
+                                                Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Log.d(TAG, "onComplete: Sign Up Success");
+                                        normalSignIn();
+                                    }
 
-                                if (!task.isSuccessful()) {
-                                    Toast.makeText(LoginActivity.this, R.string.auth_failed,
-                                            Toast.LENGTH_SHORT).show();
+                                    // ...
                                 }
-                                else
-                                {
-                                    Log.d(TAG, "onComplete: Sign Up Success");
-                                    normalSignIn();
-                                }
+                            });
+                } else {
+                    Snackbar snackbar = Snackbar
+                            .make(rel1, "Please insert all details!", Snackbar.LENGTH_LONG);
+                    snackbar.show();
+                }
 
-                                // ...
-                            }
-                        });
             }
         });
 
@@ -393,5 +403,7 @@ public class LoginActivity extends AppCompatActivity {
         txtPassword=(EditText)findViewById(R.id.txt_pass);
         txtRegister=(TextView)findViewById(R.id.txt_signUp);
         mProgress=new ProgressDialog(this);
+
+        rel1 = (RelativeLayout) findViewById(R.id.rel1);
     }
 }
